@@ -1,9 +1,12 @@
 from pygame import *
+from random import *
 
 WIDTH = 900
 HEIGHT = 600
 CENTER_X = WIDTH//2
 CENTER_Y = HEIGHT//2 
+
+
 
 window = display.set_mode((WIDTH, HEIGHT))
 clock = time.Clock()
@@ -14,22 +17,26 @@ bg = image.load("pictures/infinite_starts.jpg")
 bg = transform.scale(bg, (WIDTH, HEIGHT))
 run = True
 
-class Player(sprite.Sprite):
-    def __init__(self, sprite_image, x, y, speed):
+class BaseSprite(sprite.Sprite):
+    def __init__(self, sprite_image, x, y, speed, width, height):
         super().__init__()
 
-        self.image = transform.scale(image.load(sprite_image), (100, 100) )
+        self.image = transform.scale(image.load(sprite_image), (width, height) )
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.centery = y
         self.speed = speed
-        self.score = 0
-        self.hp = 100
 
-    
     def draw(self, window):
         window.blit(self.image, self.rect)
-    
+
+class Player(BaseSprite):
+    def __init__(self, sprite_image, x, y, speed):
+        super().__init__( sprite_image, x, y, speed, width=100 , height=100 )
+
+        self.score = 0
+        self.hp = 100
+   
     def update(self):
         keys = key.get_pressed()
         if keys[K_a] and self.rect.left > 0:
@@ -40,8 +47,46 @@ class Player(sprite.Sprite):
             self.rect.y -= self.speed 
         if keys[K_s] and self.rect.bottom < HEIGHT:
             self.rect.y += self.speed
+
+class Enemy(BaseSprite):
+    def __init__(self, sprite_image, x, y, speed):
+        super().__init__(sprite_image, x, y, speed, width=80 , height=60)
+
+        self.hp = 20 
+        self.dir = "L"
+
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.y > HEIGHT:
+            self.rect.y = randint(-600, 0)
+            self.rect.x = randint(0, WIDTH)
+        if self.rect.x >= WIDTH:
+            self.dir = "L"
+        if self.rect.x <= 0:
+            self.dir = "R"
+        if self.dir == "L":
+            self.rect.x -= self.speed
+        if self.dir == "R":
+            self.rect.x += self.speed
+                        
+        
+        
+
+
+
+    
+    
+    
     
 spaceship = Player("pictures/spaceship.png", CENTER_X, CENTER_Y + 150, 4)
+aliens = sprite.Group()
+for i in range(5):
+    numx = randint(0,WIDTH)
+    numy = randint(-HEIGHT,-50)
+
+    alien1 = Enemy("pictures/alien.png",numx, numy, 1)
+    aliens.add(alien1)
+
 
 while run:
     window.blit(bg, (0, 0))
@@ -51,6 +96,9 @@ while run:
         
     spaceship.draw(window)
     spaceship.update()
+    aliens.draw(window)
+    aliens.update()
+
 
 
 
