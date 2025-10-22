@@ -48,18 +48,26 @@ class Player(BaseSprite):
         if keys[K_s] and self.rect.bottom < HEIGHT:
             self.rect.y += self.speed
 
+
+    def fire(self):
+            fire = Shoot("pictures/fire.png", self.rect.centerx, self.rect.top - 40, 3)
+            fires.add(fire)
+            
+
 class Enemy(BaseSprite):
     def __init__(self, sprite_image, x, y, speed):
         super().__init__(sprite_image, x, y, speed, width=80 , height=60)
 
         self.hp = 20 
-        self.dir = "L"
+        self.dir = choice(["L","R"])
 
     def update(self):
         self.rect.y += self.speed
         if self.rect.y > HEIGHT:
             self.rect.y = randint(-600, 0)
             self.rect.x = randint(0, WIDTH)
+            self.dir = choice(["L","R"])
+            self.speed = randint(1,2)
         if self.rect.x >= WIDTH:
             self.dir = "L"
         if self.rect.x <= 0:
@@ -68,29 +76,36 @@ class Enemy(BaseSprite):
             self.rect.x -= self.speed
         if self.dir == "R":
             self.rect.x += self.speed
-                        
         
-        
+class Shoot(BaseSprite):
+    def __init__(self, sprite_image, x, y, speed):
+        super().__init__(sprite_image, x, y, speed, width=30 , height=40)
+    
+    def update(self):
+        self.rect.y -= self.speed
+  
+    
 
 
 
-    
-    
-    
-    
+
 spaceship = Player("pictures/spaceship.png", CENTER_X, CENTER_Y + 150, 4)
 aliens = sprite.Group()
+fires = sprite.Group()
 for i in range(5):
     numx = randint(0,WIDTH)
     numy = randint(-HEIGHT,-50)
 
-    alien1 = Enemy("pictures/alien.png",numx, numy, 1)
+    alien1 = Enemy("pictures/alien.png",numx, numy, randint(1,2))
     aliens.add(alien1)
 
 
 while run:
     window.blit(bg, (0, 0))
     for e in event.get():
+        if e.type == KEYDOWN:
+            if e.key == K_SPACE:
+                spaceship.fire()
         if e.type == QUIT:
             run = False
         
@@ -98,6 +113,13 @@ while run:
     spaceship.update()
     aliens.draw(window)
     aliens.update()
+    fires.draw(window)
+    fires.update()
+    sprite_list = sprite.spritecollide(spaceship, aliens, False)
+    if len(sprite_list) > 0:
+        run = False
+    alien_list = sprite.groupcollide(aliens, fires, True, True)
+
 
 
 
