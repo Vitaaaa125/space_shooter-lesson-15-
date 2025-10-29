@@ -36,7 +36,9 @@ class Player(BaseSprite):
 
         self.score = 0
         self.hp = 100
-   
+        self.invulnerability_timer = time.get_ticks()
+        self.fire_timer = time.get_ticks()
+
     def update(self):
         keys = key.get_pressed()
         if keys[K_a] and self.rect.left > 0:
@@ -50,24 +52,34 @@ class Player(BaseSprite):
 
 
     def fire(self):
+        now = time.get_ticks()
+        if now - self.fire_timer >= 250:
             fire = Shoot("pictures/fire.png", self.rect.centerx, self.rect.top - 40, 3)
             fires.add(fire)
+            self.fire_timer = time.get_ticks()
+        
+    def take_damage(self):
+        now = time.get_ticks()
+        if now - self.invulnerability_timer >= 2000:
+            self.hp -= 20
+            print(self.hp)
+            self.invulnerability_timer = time.get_ticks()
+
+
             
 
 class Enemy(BaseSprite):
     def __init__(self, sprite_image, x, y, speed):
         super().__init__(sprite_image, x, y, speed, width=80 , height=60)
 
-        self.hp = 20 
+        self.hp = randint(15, 25) 
         self.dir = choice(["L","R"])
+        self.invulnerability_timer = time.get_ticks()
 
     def update(self):
         self.rect.y += self.speed
         if self.rect.y > HEIGHT:
-            self.rect.y = randint(-600, 0)
-            self.rect.x = randint(0, WIDTH)
-            self.dir = choice(["L","R"])
-            self.speed = randint(1,2)
+            self.respawn()
         if self.rect.x >= WIDTH:
             self.dir = "L"
         if self.rect.x <= 0:
@@ -76,6 +88,24 @@ class Enemy(BaseSprite):
             self.rect.x -= self.speed
         if self.dir == "R":
             self.rect.x += self.speed
+        
+    def respawn(self):
+            self.rect.y = randint(-600, 0)
+            self.rect.x = randint(0, WIDTH)
+            self.dir = choice(["L","R"])
+            self.speed = randint(1,2)
+            self.hp = randint(15, 25)
+        
+
+    def take_damage(self):
+        now = time.get_ticks()
+        if now - self.invulnerability_timer >= 200:
+            self.hp -= 5
+            if self.hp <= 0:
+                self.respawn()
+            self.invulnerability_timer = time.get_ticks()
+
+
         
 class Shoot(BaseSprite):
     def __init__(self, sprite_image, x, y, speed):
@@ -117,8 +147,13 @@ while run:
     fires.update()
     sprite_list = sprite.spritecollide(spaceship, aliens, False)
     if len(sprite_list) > 0:
-        run = False
-    alien_list = sprite.groupcollide(aliens, fires, True, True)
+        spaceship.take_damage()
+        if spaceship.hp <= 0:
+            run = False
+
+    alien_list = sprite.groupcollide(aliens, fires, False, True)
+    for alien in alien_list:
+        alien.take_damage()
 
 
 
