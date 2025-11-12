@@ -6,6 +6,9 @@ HEIGHT = 600
 CENTER_X = WIDTH//2
 CENTER_Y = HEIGHT//2 
 
+font.init()
+font1 = font.Font('RubikGlitch-Regular.ttf', 30)
+font2 = font.Font('RubikGlitch-Regular.ttf', 180)
 
 
 window = display.set_mode((WIDTH, HEIGHT))
@@ -36,6 +39,7 @@ class Player(BaseSprite):
 
         self.score = 0
         self.hp = 100
+        self.hp_text = font1.render(f"Player HP: {self.hp}", True, (90, 3, 252))
         self.invulnerability_timer = time.get_ticks()
         self.fire_timer = time.get_ticks()
 
@@ -62,7 +66,7 @@ class Player(BaseSprite):
         now = time.get_ticks()
         if now - self.invulnerability_timer >= 2000:
             self.hp -= 20
-            print(self.hp)
+            self.hp_text = font1.render(f"Player HP: {self.hp}", True, (90, 3, 252))
             self.invulnerability_timer = time.get_ticks()
 
 
@@ -93,7 +97,8 @@ class Enemy(BaseSprite):
             self.rect.y = randint(-600, 0)
             self.rect.x = randint(0, WIDTH)
             self.dir = choice(["L","R"])
-            self.speed = randint(1,2)
+            if self.speed <= 2.5:
+                self.speed = self.speed + 0.05
             self.hp = randint(15, 25)
         
 
@@ -104,6 +109,9 @@ class Enemy(BaseSprite):
             if self.hp <= 0:
                 self.respawn()
             self.invulnerability_timer = time.get_ticks()
+            return True
+        else:
+            return False
 
 
         
@@ -120,6 +128,7 @@ class Shoot(BaseSprite):
 
 
 spaceship = Player("pictures/spaceship.png", CENTER_X, CENTER_Y + 150, 4)
+finish_text = font1.render("GAME OVER!", True, (90, 3, 252))
 aliens = sprite.Group()
 fires = sprite.Group()
 for i in range(5):
@@ -129,6 +138,7 @@ for i in range(5):
     alien1 = Enemy("pictures/alien.png",numx, numy, randint(1,2))
     aliens.add(alien1)
 
+is_finished = False 
 
 while run:
     window.blit(bg, (0, 0))
@@ -137,23 +147,42 @@ while run:
             if e.key == K_SPACE:
                 spaceship.fire()
         if e.type == QUIT:
-            run = False
-        
-    spaceship.draw(window)
-    spaceship.update()
-    aliens.draw(window)
-    aliens.update()
-    fires.draw(window)
-    fires.update()
-    sprite_list = sprite.spritecollide(spaceship, aliens, False)
-    if len(sprite_list) > 0:
-        spaceship.take_damage()
-        if spaceship.hp <= 0:
-            run = False
+            is_finished = True 
+    
+    if not is_finished:
+    
+        spaceship.update()
+        aliens.update()
+        fires.update()
 
-    alien_list = sprite.groupcollide(aliens, fires, False, True)
-    for alien in alien_list:
-        alien.take_damage()
+        sprite_list = sprite.spritecollide(spaceship, aliens, False)
+        if len(sprite_list) > 0:
+            spaceship.take_damage()
+            if spaceship.hp <= 0:
+                is_finished = True
+
+
+        alien_list = sprite.groupcollide(aliens, fires, False, True)
+        for alien in alien_list:
+            is_shoot = alien.take_damage()
+            if is_shoot == True:
+                spaceship.score += 15
+
+
+
+            
+    window.blit(spaceship.hp_text,(15, HEIGHT - 40))
+    spaceship.draw(window)
+    aliens.draw(window)
+    fires.draw(window)
+    if is_finished == True:
+            window.blit(finish_text,(WIDTH/2, HEIGHT/2))
+
+
+
+
+
+    
 
 
 
