@@ -8,7 +8,7 @@ CENTER_Y = HEIGHT//2
 
 font.init()
 font1 = font.Font('RubikGlitch-Regular.ttf', 30)
-font2 = font.Font('RubikGlitch-Regular.ttf', 180)
+font2 = font.Font('RubikGlitch-Regular.ttf', 500)
 
 
 window = display.set_mode((WIDTH, HEIGHT))
@@ -40,6 +40,8 @@ class Player(BaseSprite):
         self.score = 0
         self.hp = 100
         self.hp_text = font1.render(f"Player HP: {self.hp}", True, (90, 3, 252))
+        self.score_text = font1.render(f"Player score: {self.score}", True, (90, 3, 252))
+
         self.invulnerability_timer = time.get_ticks()
         self.fire_timer = time.get_ticks()
 
@@ -79,6 +81,9 @@ class Enemy(BaseSprite):
         self.hp = randint(15, 25) 
         self.dir = choice(["L","R"])
         self.invulnerability_timer = time.get_ticks()
+        self.damage_time = 200 
+        self.damage_lvl = 0
+
 
     def update(self):
         self.rect.y += self.speed
@@ -104,17 +109,22 @@ class Enemy(BaseSprite):
 
     def take_damage(self):
         now = time.get_ticks()
-        if now - self.invulnerability_timer >= 200:
+        is_kill = False
+        if now - self.invulnerability_timer >= self.damage_time:
             self.hp -= 5
             if self.hp <= 0:
+                is_kill = True
+                if self.damage_time < 20:
+                    self.damage_lvl += 20
+                    self.damage_time = self.damage_time - self.damage_lvl
                 self.respawn()
+
             self.invulnerability_timer = time.get_ticks()
-            return True
+            return True, is_kill 
         else:
-            return False
+            return False, is_kill 
 
-
-        
+       
 class Shoot(BaseSprite):
     def __init__(self, sprite_image, x, y, speed):
         super().__init__(sprite_image, x, y, speed, width=30 , height=40)
@@ -123,12 +133,11 @@ class Shoot(BaseSprite):
         self.rect.y -= self.speed
   
     
-
-
-
-
 spaceship = Player("pictures/spaceship.png", CENTER_X, CENTER_Y + 150, 4)
 finish_text = font1.render("GAME OVER!", True, (90, 3, 252))
+restart_text = font1.render(f"press R to restart game:", True, (90, 3, 252))
+restart_rect = restart_text.get_rect(center=(WIDTH/2, HEIGHT/2 + 200))
+finish_rect = finish_text.get_rect(center=(WIDTH/2, HEIGHT/2))
 aliens = sprite.Group()
 fires = sprite.Group()
 for i in range(5):
@@ -146,8 +155,14 @@ while run:
         if e.type == KEYDOWN:
             if e.key == K_SPACE:
                 spaceship.fire()
+            if e.key == K_r and is_finished == True:
+                spaceship = Player("pictures/spaceship.png", CENTER_X, CENTER_Y + 150, 4)
+                for alien in aliens:
+                    alien.respawn()
+                is_finished = False
         if e.type == QUIT:
             is_finished = True 
+            run = False
     
     if not is_finished:
     
@@ -164,30 +179,24 @@ while run:
 
         alien_list = sprite.groupcollide(aliens, fires, False, True)
         for alien in alien_list:
-            is_shoot = alien.take_damage()
+            is_shoot, is_kill = alien.take_damage()
             if is_shoot == True:
-                spaceship.score += 15
+                if is_kill == False:
+                    spaceship.score += 5
+                else:
+                    spaceship.score += 30
 
+                spaceship.score_text = font1.render(f"Player score: {spaceship.score}", True, (90, 3, 252))
 
-
-            
+ 
     window.blit(spaceship.hp_text,(15, HEIGHT - 40))
+    window.blit(spaceship.score_text,(15, 20))
     spaceship.draw(window)
     aliens.draw(window)
     fires.draw(window)
     if is_finished == True:
-            window.blit(finish_text,(WIDTH/2, HEIGHT/2))
-
-
-
-
-
-    
-
-
-
-
-
+        window.blit(finish_text,finish_rect)
+        window.blit(restart_text,restart_rect)
 
     display.update()
     clock.tick(FPS)
