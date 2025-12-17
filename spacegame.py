@@ -42,8 +42,8 @@ class Player(BaseSprite):
 
         self.score = 0
         self.hp = 100
-        self.hp_text = font1.render(f"Player HP: {self.hp}", True, (90, 3, 252))
-        self.score_text = font1.render(f"Player score: {self.score}", True, (90, 3, 252))
+        self.hp_text = font1.render(f"HP: {self.hp}", True, (90, 3, 252))
+        self.score_text = font1.render(f"Score: {self.score}", True, (90, 3, 252))
         self.invulnerability_timer = time.get_ticks()
         self.fire_timer = time.get_ticks()
 
@@ -70,7 +70,7 @@ class Player(BaseSprite):
         now = time.get_ticks()
         if now - self.invulnerability_timer >= 2000:
             self.hp -= 20
-            self.hp_text = font1.render(f"Player HP: {self.hp}", True, (90, 3, 252))
+            self.hp_text = font1.render(f"HP: {self.hp}", True, (90, 3, 252))
             self.invulnerability_timer = time.get_ticks()
 
 
@@ -181,7 +181,7 @@ while run:
                     spaceship.score += 5
                 else:
                     spaceship.score += 30
-                spaceship.score_text = font1.render(f"Player score: {spaceship.score}", True, (90, 3, 252))
+                spaceship.score_text = font1.render(f"Score: {spaceship.score}", True, (90, 3, 252))
 
     aliens.draw(window)
     fires.draw(window)
