@@ -6,16 +6,19 @@ HEIGHT = 600
 CENTER_X = WIDTH//2
 CENTER_Y = HEIGHT//2 
 
+mixer.init()
+mixer.music.load("audio/musictheme.ogg")
+mixer.music.set_volume(0.2)
+mixer.music.play(loops = -1 )
+laser_sound = mixer.Sound("audio/laser.wav")
+laser_sound.set_volume(0.4)
 font.init()
 font1 = font.Font('RubikGlitch-Regular.ttf', 30)
 font2 = font.Font('RubikGlitch-Regular.ttf', 500)
-
-
 window = display.set_mode((WIDTH, HEIGHT))
 clock = time.Clock()
 display.set_caption("space shoot")
 FPS = 60
- 
 bg = image.load("pictures/infinite_starts.jpg")
 bg = transform.scale(bg, (WIDTH, HEIGHT))
 run = True
@@ -41,7 +44,6 @@ class Player(BaseSprite):
         self.hp = 100
         self.hp_text = font1.render(f"Player HP: {self.hp}", True, (90, 3, 252))
         self.score_text = font1.render(f"Player score: {self.score}", True, (90, 3, 252))
-
         self.invulnerability_timer = time.get_ticks()
         self.fire_timer = time.get_ticks()
 
@@ -56,12 +58,12 @@ class Player(BaseSprite):
         if keys[K_s] and self.rect.bottom < HEIGHT:
             self.rect.y += self.speed
 
-
     def fire(self):
         now = time.get_ticks()
         if now - self.fire_timer >= 250:
             fire = Shoot("pictures/fire.png", self.rect.centerx, self.rect.top - 40, 3)
             fires.add(fire)
+            laser_sound.play()
             self.fire_timer = time.get_ticks()
         
     def take_damage(self):
@@ -72,8 +74,6 @@ class Player(BaseSprite):
             self.invulnerability_timer = time.get_ticks()
 
 
-            
-
 class Enemy(BaseSprite):
     def __init__(self, sprite_image, x, y, speed):
         super().__init__(sprite_image, x, y, speed, width=80 , height=60)
@@ -83,7 +83,6 @@ class Enemy(BaseSprite):
         self.invulnerability_timer = time.get_ticks()
         self.damage_time = 200 
         self.damage_lvl = 0
-
 
     def update(self):
         self.rect.y += self.speed
@@ -106,7 +105,7 @@ class Enemy(BaseSprite):
                 self.speed = self.speed + 0.05
             self.hp = randint(15, 25)
         
-
+    
     def take_damage(self):
         now = time.get_ticks()
         is_kill = False
@@ -165,17 +164,14 @@ while run:
             run = False
     
     if not is_finished:
-    
         spaceship.update()
         aliens.update()
         fires.update()
-
         sprite_list = sprite.spritecollide(spaceship, aliens, False)
         if len(sprite_list) > 0:
             spaceship.take_damage()
             if spaceship.hp <= 0:
                 is_finished = True
-
 
         alien_list = sprite.groupcollide(aliens, fires, False, True)
         for alien in alien_list:
@@ -185,19 +181,16 @@ while run:
                     spaceship.score += 5
                 else:
                     spaceship.score += 30
-
                 spaceship.score_text = font1.render(f"Player score: {spaceship.score}", True, (90, 3, 252))
 
- 
+    aliens.draw(window)
+    fires.draw(window)
     window.blit(spaceship.hp_text,(15, HEIGHT - 40))
     window.blit(spaceship.score_text,(15, 20))
     spaceship.draw(window)
-    aliens.draw(window)
-    fires.draw(window)
     if is_finished == True:
         window.blit(finish_text,finish_rect)
         window.blit(restart_text,restart_rect)
 
     display.update()
     clock.tick(FPS)
-
